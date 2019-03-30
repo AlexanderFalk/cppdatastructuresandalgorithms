@@ -1,18 +1,20 @@
-template <typename T>
+template <typename T, typename W>
 struct UndirectedGraph{
     private:
         struct Node {
-            Node *node;
             T data;
         }
+        
         struct Edge {
             Node *from;
             Node *to;
-            T weight;
+            W weight;
         }
 
+        Edge[] edges;
+
     public:
-        void insert(Node &from, Node &to, T weight);
+        void insert(Node &from, Node &to, T data, W weight);
         T search(T data);
         bool isEmpty();
         void remove(T data);

@@ -19,11 +19,26 @@ struct BSTree {
 
         // Not allowed to change the memberfunction
         bool isEmpty() const { return root==NULL; }
+        struct Node* parent(struct Node* node);
+        struct Node* grand_parent(struct Node* node);
+        struct Node* sibling(struct Node* node);
+        struct Node* uncle(struct Node* node);
         void insert(T data);
         void print_inorder();
         void inorder(Node* root);
+        void recolor(BSTree *bstree);
+        bool inbalanced();
 };
 
+
+struct Node* parent(struct Node* node) {
+    return node->
+};
+
+
+/**
+ * When a node is inserted, the node is considered to be RED by default
+ * */
 template <typename T>
 void BSTree<T>::insert(T data) {
     Node *node = new Node;
@@ -31,10 +46,14 @@ void BSTree<T>::insert(T data) {
     node->data = data;
     node->left = NULL;
     node->right = NULL;
+    node->color = Color::RED;
     parent = NULL;
 
-    // If the root node is NULL, then set the new node to the root node. 
-    if(isEmpty()) root = node;
+    // If the root node is NULL, then set the new node to the root node, and make the root node BLACK.
+    if(isEmpty()) {
+        root = node;
+        root->color = Color::BLACK;
+    }
     else {
         // Create a current node and set it to the root. 
         Node *current;
@@ -43,8 +62,23 @@ void BSTree<T>::insert(T data) {
         // Loop through the tree to find the node's parent. 
         while(current) {
             parent = current;
-            if(node->data > current->data) current = current->right;
-            else current = current->left;
+            if(node->data > current->data) {
+                current = current->right;
+                if(node->color == Color::BLACK) {
+                    // Parent Node is BLACK, therefore I am RED
+                    current->color = Color::RED;
+                } else {
+                    current->color = Color::BLACK;
+                }
+            } else {
+                current = current->left;
+                if(node->color == Color::BLACK) {
+                    // Parent Node is BLACK, therefore I am RED
+                    current->color = Color::RED;
+                } else {
+                    current->color = Color::BLACK;
+                }
+            } 
         }
 
         if (node->data < parent->data) {
