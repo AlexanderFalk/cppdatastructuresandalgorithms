@@ -39,6 +39,8 @@ struct RBTree {
 
         void print_inorder();
         void printBT(const std::string& prefix, const Node<T> *node, bool isLeft);
+        void dump(Node<T>* node, int tabs);
+        void dump();
         void inorder(Node<T>* root);
 };
 
@@ -77,49 +79,48 @@ Node<T>* RBTree<T>::uncle(Node<T>* node) const {
 
 template <typename T>
 void RBTree<T>::rotate_left(Node<T>* node) {
-    Node<T> *temp_node = node->right;
-    assert(temp_node != NULL);
-    node->right = temp_node->left;
-    if(temp_node->left != NULL)
-        temp_node->left->parent = node;
-    temp_node->parent = node->parent;
-    if(node->parent == NULL) {
-        root = temp_node;
+    Node<T>* new_node;
+    new_node = node->right;
+    node->right = new_node->left;
+    if (new_node->left) {
+      new_node->left->parent = node;
     }
-    else {
-        
-        if(node == (node->parent)->left) {
-            node->parent->left = temp_node;
-        } else {
-            node->parent->right = temp_node;
-        }
+
+    new_node->parent = node->parent;
+    new_node->left = node;
+
+    if (!node->parent) {
+      root = new_node;
     }
-    
-    temp_node->left = node;
-    node->parent = temp_node;
+    else if (node == node->parent->left) {
+      node->parent->left = new_node;
+    } else {
+      node->parent->right = new_node;
+    }
+    node->parent = new_node;
 };
 
 template <typename T>
 void RBTree<T>::rotate_right(Node<T>* node) {
-    Node<T> *temp_node = node->left;
-    assert(temp_node != NULL);
-    node->left = temp_node->right;
-    if(temp_node->right != NULL)
-        temp_node->right->parent = node;
-    temp_node->parent = node->parent;
-    if(node->parent == NULL){
-        root = temp_node;
+    Node<T>* new_node;
+    new_node = node->left;
+    node->left = new_node->right;
+    if (new_node->right) {
+      new_node->right->parent = node;
     }
-    else {
-        if(node == (node->parent)->right) {
-            node->parent->right = temp_node;
-        } else {
-            node->parent->left = temp_node;
-        }
+
+    new_node->parent = node->parent;
+    new_node->right = node;
+
+    if (!node->parent) {
+      root = new_node;
     }
-    std::cout << "got here" << "\n";
-    temp_node->right = node;
-    node->parent = temp_node;
+    else if (node == node->parent->left) {
+      node->parent->left = new_node;
+    } else {
+      node->parent->right = new_node;
+    }
+    node->parent = new_node;
 };
 
 
@@ -134,50 +135,40 @@ void RBTree<T>::rotate_right(Node<T>* node) {
  * */
 template <typename T>
 void RBTree<T>::insert(T data) {
-    Node<T> *node = new Node<T>;
-    Node<T> *parent;
-    node->data = data;
-    node->left = NULL;
-    node->right = NULL;
-    node->parent = NULL;
-    node->color = Color::RED;
+    // Create a Current node and set it to the root to traverse. 
+    Node<T> *node, *parent, *current;
     parent = NULL;
+    node = root;
 
-    // If the root node is NULL, then set the new node to the root node, and make the root node BLACK.
-    if(isEmpty()) {
-        root = node;
-        root->color = Color::BLACK;
-    }
-    else {
-        // Create a current node and set it to the root to traverse. 
-        Node<T> *current;
-        current = root;
-
-        while(current) {
-            // Set parent to the current node
-            parent = current;
-            if(node->data > current->data) {
-                current = current->right;
-            } else {
-                current = current->left;
-            }
-        }
-
-        if(node->data < parent->data) {
-            //node->parent = parent;
-            parent->left = node;
+    while(node) {
+        // Set parent to the current node
+        parent = node;
+        if(node->data > current->data) {
+            node = node->right;
         } else {
-            //node->parent = parent;
-            parent->right = node;
+            node = node->left;
         }
     }
 
-    repair(node);
-
-    // Find new root
-    //root = node;
-    //while(get_parent(node) != NULL)
-    //    root = get_parent(root);
+    if(!parent) {
+        current = root = new Node<T>;
+        current->data = data;
+        current->color = Color::BLACK;
+        current->parent = current->left = current->right = NULL;
+    } else {
+        current = new Node<T>;
+        current->data = data;
+        current->color = Color::RED;
+        current->parent = parent;
+        current->left = current->right = NULL;
+        
+        if(current->data < parent->data) {
+            parent->left = current;
+        } else {
+            parent->right = current;
+        }
+    }
+    repair(current);
 }
 
 /**
@@ -192,16 +183,12 @@ void RBTree<T>::insert(T data) {
 template<typename T>
 void RBTree<T>::repair(Node<T>* node) {
     if(get_parent(node) == NULL) {
-        std::cout << "case1" << "\n";
         case_1_fix(node);
     } else if(get_parent(node)->color == Color::BLACK) {
-        std::cout << "case2" << "\n";
         case_2_fix(node);
     } else if(uncle(node) != NULL && uncle(node)->color == Color::RED) {
-        std::cout << "case3" << "\n";
         case_3_fix(node);
     } else {
-        std::cout << "case4" << "\n";
         case_4_fix(node);
     }
 }
@@ -218,7 +205,6 @@ void RBTree<T>::case_1_fix(Node<T>* node) {
 
 template<typename T>
 void RBTree<T>::case_2_fix(Node<T>* node) {
-    std::cout << "2" << "\n";
     return;
 }
 
@@ -286,22 +272,26 @@ void RBTree<T>::inorder(Node<T> *node) {
 }
 
 template<typename T>
-void RBTree<T>::printBT(const std::string& prefix, const Node<T> *node, bool isLeft)
-{
-    if( node != nullptr )
-    {
-        std::cout << prefix;
-
-        std::cout << (isLeft ? "|--" : "^--" );
-
-        // print the value of the node
-        std::cout << node->data << std::endl;
-
-        // enter the next tree level - left and right branch
-        printBT( prefix + (isLeft ? "|   " : "    "), node->left, true);
-        printBT( prefix + (isLeft ? "|   " : "    "), node->right, false);
-    }
+void RBTree<T>::dump() {
+    dump(root, 0); 
 }
+
+template<typename T>
+void RBTree<T>::dump(Node<T>* node, int tabs)
+  {
+    if (!node) {
+      return;
+    }
+
+    dump(node->left, tabs + 1);
+
+    for (int i = 0; i < tabs; ++i) {
+      std::cout << "\t\t";
+    }
+    std::cout << node->data << (node->color ? "B" : "R") << "\n";
+
+    dump(node->right, tabs + 1);
+  }
 
 
 int main() {
@@ -309,14 +299,11 @@ int main() {
     tree.insert(2);
     tree.insert(5);
     tree.insert(8);
-    tree.insert(10);
-    tree.insert(1);
-    tree.insert(18);
-    tree.insert(12);
+
     tree.insert(22);
     tree.insert(3);
     tree.insert(4);
-    tree.print_inorder();
-    tree.printBT("", tree.get_root(), false);
+    
+    tree.dump();
     return 0;
 }
